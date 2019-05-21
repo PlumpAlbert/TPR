@@ -1,12 +1,13 @@
 #!/usr/bin/python3
 
-import sympy as sp
-import matplotlib.pyplot as plt
-import pandas as pd
 import os
-import numpy as np
-from math import gcd
 from functools import reduce
+from math import gcd
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import sympy as sp
 
 # Лабораторная работа № 1
 document = open('lab_1.md', 'w')
@@ -155,9 +156,25 @@ document.write(
     '## Таблица базисных переменных\n'
 )
 
-table = pd.DataFrame(columns=['№'] + X + ['ДБР'])
-for i in range(len(X)):
+table = pd.DataFrame(columns=X + ['ДБР'])
+for i in range(len(X) - 1):
     for j in range(i + 1, len(X)):
+        new_row = {X[i]: 0, X[j]: 0}
+        __symbols = X[0:i] + X[i + 1:j] + X[j + 1:]
+        solution = sp.linsolve(systemX, __symbols).subs({X[i]: 0, X[j]: 0}).as_dummy()
+        if not solution:
+            for x in X:
+                new_row[x] = '-'
+            new_row['ДБР'] = '-'
+        else:
+            for s in solution:
+                for k, v in enumerate(s):
+                    new_row[__symbols[k]] = v
+                new_row['ДБР'] = '-' if np.any(np.array(s) < 0) else '+'
+        table = table.append(new_row, ignore_index=True)
 
-
-
+table.index += 1
+document.write(
+    table.to_html() + '\n'
+)
+print('Finish!')
