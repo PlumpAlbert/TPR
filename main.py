@@ -3,6 +3,7 @@
 import sympy as sp
 import matplotlib.pyplot as plt
 import pandas as pd
+import os
 import numpy as np
 from math import gcd
 from functools import reduce
@@ -13,7 +14,7 @@ x1, x2 = sp.symbols("x1 x2")
 X = [x1, x2]
 # Исходные точки
 points = [
-    {x1: 0,  x2: 80},
+    {x1: 0, x2: 80},
     {x1: 90, x2: 80},
     {x1: 80, x2: 60},
     {x1: 55, x2: 20},
@@ -22,12 +23,45 @@ points = [
 
 document.write(
     '# Лабораторная работа № 1\n' +
-    '## Исходные точки\n' +
-    ', '.join(['(%d, %d)' % (p[x1], p[x2]) for p in points]) + '\n'
+    '## Исходные данные\n' +
+    ',\n'.join([
+        '%s (%d, %d)' % (
+            ['A', 'B', 'C', 'D', 'E'][i],
+            p[x1],
+            p[x2]
+        ) for (i, p) in enumerate(points)
+    ]) + '\n'
 )
 
+fig: plt.Figure = plt.figure(1, (6, 6), 100)
+ax: plt.Axes = fig.add_subplot(1, 1, 1)
+colors = ['b', 'g', 'r', 'c']
+for i in range(1, len(points)):
+    ax.plot(
+        [points[i - 1][x1], points[i][x1]],
+        [points[i - 1][x2], points[i][x2]],
+        c=colors[i - 1]
+    )
+ax.set_xlim(0, 100)
+ax.set_xlabel('$x_1$')
+ax.set_xticks(np.linspace(0, 100, 11, True))
+ax.set_ylim(0, 100)
+ax.set_ylabel('$x_2$')
+ax.set_yticks(np.linspace(0, 100, 11, True))
+ax.spines['top'].set_color('none')
+ax.xaxis.tick_bottom()
+ax.spines['right'].set_color('none')
+ax.yaxis.tick_left()
+ax.spines['left'].set_position('zero')
+ax.spines['bottom'].set_position('zero')
+ax.grid(True)
+if os.path.isfile('plot_1.png'):
+    os.remove('plot_1.png')
+fig.savefig('plot_1.png', transparent=True)
+document.write('![Исходный график](plot_1.png)\n')
+
 # Целевая функция
-f = 5 * x1 + 6 * x2
+f: sp.Add = 5 * x1 + 6 * x2
 document.write(
     '## Целевая функция\n' +
     '$ f = ' + sp.latex(f) + '$\n'
@@ -72,3 +106,58 @@ document.write(
     ','.join([sp.latex(x) for x in X]) +
     r' \geq 0. \end{cases}$' + '\n'
 )
+
+__coeff = f.as_coefficients_dict()
+__x = np.linspace(-10, 10, 21)
+__y = (-__coeff[x1] * __x) / __coeff[x2]
+ax.plot(
+    __x,
+    __y,
+    c='k',
+    ls='dashed'
+)
+ax.plot(
+    __x + max([p[x1] for p in points]),
+    __y + max([p[x2] for p in points]),
+    c='k',
+    ls='dashed'
+)
+
+ax.set_xlim(-10, 100)
+ax.set_xlabel('$x_1$')
+ax.set_xticks(np.linspace(-10, 100, 12, True))
+ax.set_ylim(-10, 100)
+ax.set_ylabel('$x_2$')
+ax.set_yticks(np.linspace(-10, 100, 12, True))
+ax.spines['top'].set_color('none')
+ax.xaxis.tick_bottom()
+ax.spines['right'].set_color('none')
+ax.yaxis.tick_left()
+ax.spines['left'].set_position('zero')
+ax.spines['bottom'].set_position('zero')
+ax.grid(True)
+if os.path.isfile('plot_2.png'):
+    os.remove('plot_2.png')
+fig.savefig('plot_2.png', transparent=True)
+fig.clear()
+document.write(
+    '## График\n' +
+    '![График](plot_2.png)\n'
+)
+
+table = pd.DataFrame(columns=['x_1', 'x_2', 'f(x)'])
+for i, p in enumerate(points):
+    table.loc[i] = [p[x1], p[x2], f.subs({x1: p[x1], x2: p[x2]})]
+
+document.write(
+    '## Значение целевой функции в точках пересечения прямых\n' +
+    table.to_html() + '\n' +
+    '## Таблица базисных переменных\n'
+)
+
+table = pd.DataFrame(columns=['№'] + X + ['ДБР'])
+for i in range(len(X)):
+    for j in range(i + 1, len(X)):
+
+
+
