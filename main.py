@@ -96,12 +96,13 @@ document.write(
     '### Каноническая форма\n' +
     r'$ X = \begin{cases}'
 )
-for i in range(len(systemX)):
+equationX = systemX.copy()
+for i in range(len(equationX)):
     x = sp.symbols('x%d' % (i + 3))
     X.append(x)
-    systemX[i] = sp.Eq(systemX[i].lhs + x, systemX[i].rhs)
+    equationX[i] = sp.Eq(equationX[i].lhs + x, equationX[i].rhs)
     document.write(
-        r' {0},\\'.format(sp.latex(systemX[i]))
+        r' {0},\\'.format(sp.latex(equationX[i]))
     )
 document.write(
     ','.join([sp.latex(x) for x in X]) +
@@ -161,7 +162,8 @@ for i in range(len(X) - 1):
     for j in range(i + 1, len(X)):
         new_row = {X[i]: 0, X[j]: 0}
         __symbols = X[0:i] + X[i + 1:j] + X[j + 1:]
-        solution = sp.linsolve(systemX, __symbols).subs({X[i]: 0, X[j]: 0}).as_dummy()
+        solution = sp.linsolve(equationX, __symbols).subs(
+            {X[i]: 0, X[j]: 0}).as_dummy()
         if not solution:
             for x in X:
                 new_row[x] = '-'
@@ -177,4 +179,48 @@ table.index += 1
 document.write(
     table.to_html() + '\n'
 )
+document.close()
+
+# Конец ЛР 1
+
+# Лабораторная работа № 2
+document = open('lab_2.md', 'w')
+
+document.write(
+    '# Осуществим переход к двойственной задаче\n' +
+    'Целевая функция: $f(x)=' + sp.latex(f) + '$\n' +
+    'Область ограничений в стандартной форме:\n' +
+    r'$$X = \begin{cases}' +
+    r',\\'.join([sp.latex(s) for s in systemX]) +
+    r'.\end{cases}\\$$'
+)
+
+Y = []
+phi = 0
+
+for i, coeff in enumerate([s.rhs for s in systemX]):
+    Y.append(sp.symbols('y%d' % (i + 1)))
+    phi += Y[i] * coeff
+
+systemY = []
+for x in (x1, x2):
+    systemY.append(0)
+    for i, s in enumerate(systemX):
+        systemY[-1] += s.lhs.coeff(x) * Y[i]
+    systemY[-1] = sp.GreaterThan(systemY[-1], f.coeff(x))
+
+document.write(
+    'Двойственная задача:\n' +
+    r'$$\varphi(' +
+        ','.join([sp.latex(y) for y in Y])
+    + ')=' + sp.latex(phi) + r'\rightarrow min $$' +
+    r'$$Y=\begin{cases}' + \
+    r',\\'.join([sp.latex(s) for s in systemY]) + r',\\' + \
+    ','.join([sp.latex(y) for y in Y]) + '\geq 0.'
+    r'\end{cases}$$'
+)
+
+# Конец ЛР 2
+
+
 print('Finish!')
