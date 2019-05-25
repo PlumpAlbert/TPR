@@ -2,3 +2,5 @@
 .idea/
 lab_*.md
 *.png
+*.pdf
+__pycache__
