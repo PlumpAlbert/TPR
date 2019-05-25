@@ -11,6 +11,9 @@ import sympy as sp
 
 # Лабораторная работа № 1
 document = open('lab_1.md', 'w')
+document.write(
+    '---\nmainfont: "FantasqueSansMono Nerd Font"\n---\n'
+)
 x1, x2 = sp.symbols("x1 x2")
 X = [x1, x2]
 # Исходные точки
@@ -185,6 +188,9 @@ document.close()
 
 # Лабораторная работа № 2
 document = open('lab_2.md', 'w')
+document.write(
+    '---\nmainfont: "FantasqueSansMono Nerd Font"\n---\n'
+)
 
 document.write(
     '# Осуществим переход к двойственной задаче\n' +
@@ -212,10 +218,10 @@ for x in (x1, x2):
 document.write(
     'Двойственная задача:\n' +
     r'$$\varphi(' +
-        ','.join([sp.latex(y) for y in Y])
+    ','.join([sp.latex(y) for y in Y])
     + ')=' + sp.latex(phi) + r'\rightarrow min $$' +
-    r'$$Y=\begin{cases}' + \
-    r',\\'.join([sp.latex(s) for s in systemY]) + r',\\' + \
+    r'$$Y=\begin{cases}' +
+    r',\\'.join([sp.latex(s) for s in systemY]) + r',\\' +
     ','.join([sp.latex(y) for y in Y]) + '\geq 0.'
     r'\end{cases}$$'
 )
