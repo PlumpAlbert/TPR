@@ -1,5 +1,6 @@
 import pandas as pd
 import sympy as sp
+from random import randint
 
 
 def main(f, systemX, X, optX):
@@ -130,4 +131,70 @@ def main(f, systemX, X, optX):
         )
     else:
         document.write('<h3 style="color: crimson">Соси член, кусок долбаеба.\
-        Какую-то хуйню сделал... Ищи ошибку!</h3>')
+        Какую - то хуйню сделал...Ищи ошибку! < / h3 > ')
+
+    document.write("\n\n# 3. Выполним анализ двойственных оценок")
+    maxVal = max([resultY[q] for q in resultY])
+    for e in resultY:
+        if maxVal == resultY[e]:
+            maxY = e
+    document.write(
+        '\n\n## Двойственные оценки $(y)$ являются мерой дефицитности ресурса \n\n' +
+        '$' + ','.join([sp.latex(e) + '^*=0' for e in __y]) + '$ - не дефицитные ресурсы;\n\n' +
+        '$' + ','.join([sp.latex(e) + '^*=' + sp.latex(resultY[e]) for e in _y]) + '$ - дефицитные ресурсы, ' +
+        'причем $' + sp.latex(maxY) + '^*$ - наиболее дефицитный ресурс.'
+    )
+    document.write(
+        '\n\n## Величина двойственной оценки ресурса также показывает,\
+    насколько возросло бы максимальное значение целевой функции,\
+    если бы объем данного ресурса увеличился на единицу:\
+    $\Delta f(x^*)=y^*_i * \Delta b_i$\n\n' +
+        '$' + ','.join([sp.latex(e) + '^*=0' for e in __y]) +
+        '$ - увеличение объема данных ресурсов на единицу не приведет к приросту целевой функции;\n\n' +
+        '$' + ','.join([sp.latex(e) + '^*=' + sp.latex(resultY[e]) for e in _y]) +
+        '$ - увеличение объема данных ресурсов на единицу приведет к приросту целевой функции, ' +
+        'причем увеличение объема ресурса $' +
+        sp.latex(maxY) + '^*$ даст наибольший прирост целевой функции.'
+    )
+
+    document.write(
+        '\n\n# 4. Определим целесообразность включения в план новых изделий\n\n'
+    )
+    a = sp.symbols(' '.join(['a%d' % (i+1) for i in range(len(Y))]))
+    bad = False
+    good = False
+    ix = 3
+    while not bad or not good:
+        A = {p: randint(1, 5) for p in a}
+        c = randint(1, 30)
+        P = 0
+        for i, p in enumerate(A):
+            P += A[p] * Y[i]
+        P -= c
+        res = P.subs(resultY)
+        if res > 0 and not bad:
+            document.write('Изделие $P_{%d}$ с прибылью от реализации\
+            единицы этого изделия %d денежных единиц\n' % (ix, c))
+            document.write(
+                r'$$' +
+                ','.join(['a_{{{0}{1}}} = {2}'.format(ix, i+1, A[a[i]]) for i in range(len(a))]) + '$$\n\n' +
+                r'$$\sum_{i=1}^{%d}a_{%d i}*y^*_i - c_{%d}=' % (len(a), ix, ix) +
+                '+'.join([sp.latex(A[p] * resultY[Y[i]]) for i, p in enumerate(A)]) +
+                '-' + sp.latex(c) + '=' +
+                sp.latex(res) + '> 0$$\n\n'
+            )
+            ix += 1
+            bad = True
+        if res < 0 and not good:
+            document.write('Изделие $P_{%d}$ с прибылью от реализации\
+            единицы этого изделия %d денежных единиц\n' % (ix, c))
+            document.write(
+                r'$$' +
+                ','.join(['a_{{{0}{1}}} = {2}'.format(ix, i+1, A[a[i]]) for i in range(len(a))]) + '$$\n\n' +
+                r'$$\sum_{i=1}^{%d}a_{%d i}*y^*_i - c_{%d}=' % (len(a), ix, ix) +
+                '+'.join([sp.latex(A[p] * resultY[Y[i]]) for i, p in enumerate(A)]) +
+                '-' + sp.latex(c) + '=' +
+                sp.latex(res) + '< 0$$\n\n'
+            )
+            ix += 1
+            good = True
