@@ -1,27 +1,24 @@
 #!/usr/bin/python3
 
 import os
-from functools import reduce
-from math import gcd
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
+
 import sympy as sp
 
 import lab_1
 import lab_2
+import lab_3
 
 os.system('reset')
 
 x1, x2 = sp.symbols("x1 x2")
-f: sp.Add = 5 * x1 + 6 * x2
+f: sp.Add = 7 * x1 + 4 * x2
 # Исходные точки
 points = [
     {x1: 0, x2: 80},
-    {x1: 90, x2: 80},
-    {x1: 80, x2: 60},
-    {x1: 55, x2: 20},
-    {x1: 25, x2: 0}
+    {x1: 100, x2: 80},
+    {x1: 100, x2: 50},
+    {x1: 80, x2: 30},
+    {x1: 30, x2: 0}
 ]
 
 # Лабораторная работа № 1
@@ -35,6 +32,8 @@ systemX, X, optX = lab_1.main(x1, x2, points, f)
 lab_2.main(f, systemX, X, optX)
 
 # Конец ЛР 2
+
+lab_3.main(X, systemX, f, optX)
 
 
 print('Finish!')
