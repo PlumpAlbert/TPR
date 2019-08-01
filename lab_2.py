@@ -9,7 +9,7 @@ def main(f, systemX, X, optX):
 
     document.write(
         '---\n' +
-        'mainfont: Google Sans\n' +
+        'mainfont: CMU Typewriter Text\n' +
         'header-includes:\n' +
         r'- \usepackage{booktabs}'+'\n' +
         'output:\n' +

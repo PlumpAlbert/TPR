@@ -7,7 +7,7 @@ def main(X, systemX, f, optX):
     document = open('lab_3.md', 'w')
     document.write(
         '---\n' +
-        'mainfont: Google Sans\n' +
+        'mainfont: CMU Typewriter Text\n' +
         'header-includes:\n' +
         r'- \usepackage{booktabs}' + '\n' +
         'output:\n' +
