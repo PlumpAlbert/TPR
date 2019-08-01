@@ -35,8 +35,8 @@ lab_2.main(f, systemX, X, optX)
 simplexTable = lab_3.main(X, systemX, f, optX)
 
 activeLine = [
-    {x1: sp.nsimplify(82 + 1/7), x2: 80},
-    {x1: 100, x2: sp.nsimplify(62 + 1/7)}
+    {x1: sp.nsimplify(76 + 7/8), x2: 80},
+    {x1: 100, x2: sp.nsimplify(62 + 3/4)}
 ]
 lab_4.main(points.copy(), X, f, optX, systemX, simplexTable, activeLine)
 

@@ -93,7 +93,8 @@ def main(X, systemX, f, optX):
 
     printTable(table)
 
-    while not np.all(table.iloc[len(table) - 1][1:] >= 0):
+    while not np.all(table.iloc[len(table) - 1][1:] >= 0) \
+            or not np.all(table['B'] >= 0):
         # Находим ведущий столбец
         leadCol = table.iloc[-1][1:].astype(float).idxmin()
         # print(table[leadCol])
