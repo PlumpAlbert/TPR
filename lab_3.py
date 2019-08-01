@@ -141,3 +141,4 @@ def main(X, systemX, f, optX):
             table.at[len(table) - 1, col] -= table.at[leadRow, col] * aik
 
         printTable(table)
+    return table
