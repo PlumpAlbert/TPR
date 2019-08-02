@@ -36,7 +36,7 @@ def main(x1, x2, points, f):
         ]) + '\n'
     )
 
-    fig: plt.Figure = plt.figure(1, (4, 4), 100)
+    fig: plt.Figure = plt.figure(1, (6, 6), 100)
     ax: plt.Axes = fig.add_subplot(1, 1, 1)
     colors = ['b', 'g', 'r', 'c']
     for i in range(1, len(points)):

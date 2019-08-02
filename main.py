@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os
+from random import uniform
 
 import sympy as sp
 
@@ -35,9 +35,31 @@ lab_2.main(f, systemX, X, optX)
 simplexTable = lab_3.main(X, systemX, f, optX)
 
 activeLine = [
-    {x1: sp.nsimplify(76 + 7/8), x2: 80},
-    {x1: 100, x2: sp.nsimplify(62 + 3/4)}
+    {x1: sp.nsimplify(76 + 7 / 8), x2: 80},
+    {x1: 100, x2: sp.nsimplify(62 + 3 / 4)}
 ]
-lab_4.main(points.copy(), X, f, optX, systemX, simplexTable, activeLine)
+excess_start_point = {
+    # x1: optX[x1] - sp.nsimplify(uniform(0, 20)),
+    # x2: optX[x2] + sp.nsimplify(uniform(0, 20))
+    x1: 90, x2: 90
+}
+excess_line_y = ((x1 - excess_start_point[x1])
+                 * (optX[x2] - excess_start_point[x2])
+                 / (optX[x1] - excess_start_point[x1])
+                 ) + excess_start_point[x2]
+excessLine = [
+    excess_start_point,
+    {x1: 110, x2: excess_line_y.subs({x1: 110})}
+]
+lab_4.main(
+    points.copy(),
+    X,
+    f,
+    optX,
+    systemX,
+    simplexTable,
+    activeLine,
+    excessLine
+)
 
 print('Finish!')
