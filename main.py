@@ -51,6 +51,16 @@ excessLine = [
     excess_start_point,
     {x1: 110, x2: excess_line_y.subs({x1: 110})}
 ]
+inactiveLine = [
+    {
+        x1: 32 + sp.nsimplify(5/6),
+        x2: 20
+    },
+    {
+        x1: 90,
+        x2: 25 + sp.nsimplify(3/7)
+    }
+]
 lab_4.main(
     points.copy(),
     X,
@@ -59,7 +69,8 @@ lab_4.main(
     systemX,
     simplexTable,
     activeLine,
-    excessLine
+    excessLine,
+    inactiveLine
 )
 
 print('Finish!')
