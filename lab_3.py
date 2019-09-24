@@ -91,8 +91,9 @@ def main(X, systemX, f, optX):
             t.set_index('Базис').to_latex()
         )
 
-    printTable(table)
 
+    printTable(table)
+    _table = pd.DataFrame(table, copy=True)
     while not np.all(table.iloc[len(table) - 1][1:] >= 0) \
             or not np.all(table['B'] >= 0):
         # Находим ведущий столбец
@@ -142,4 +143,4 @@ def main(X, systemX, f, optX):
             table.at[len(table) - 1, col] -= table.at[leadRow, col] * aik
 
         printTable(table)
-    return table
+    return _table
