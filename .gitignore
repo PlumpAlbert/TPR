@@ -3,4 +3,7 @@
 lab_*.md
 *.png
 *.pdf
+*.tex
+*.aux
+*.log
 __pycache__
