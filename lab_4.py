@@ -1,11 +1,35 @@
 import os
 
+from matplotlib import rc
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import sympy as sp
 
 x1, x2 = sp.symbols('x1 x2')
+rc('xtick', labelsize=16)
+rc('ytick', labelsize=16)
+document = open('lab_4.tex', 'w')
+document.write(
+    r'\documentclass[12pt,a4paper]{article}' '\n'
+    r'\renewcommand{\figurename}{Рис.}''\n'
+    r"\usepackage{amsmath}" "\n"
+    r'\usepackage{booktabs}' '\n'
+    r'\usepackage{graphicx}' '\n'
+    r'\usepackage{xecyr}''\n'
+    r"\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}" "\n"
+    r"\setmainfont{Times New Roman}" "\n"
+
+    r'\title{Лабораторная работа №4}' '\n'
+    r'\author{Plump Albert}' '\n'
+    r'\date{September 2019}' '\n'
+
+    r'\begin{document}' '\n'
+    r'\begin{titlepage}' '\n'
+    r'\maketitle' '\n'
+    r'\newpage' '\n'
+    r'\end{titlepage}''\n'
+)
 
 
 def plot_new_limit(plot_points, limit_points, filename):
@@ -43,6 +67,61 @@ def plot_new_limit(plot_points, limit_points, filename):
     figure.clear()
 
 
+def simplex_shit(table, doc):
+    iteration = 0
+    while np.any(table.iloc[-1][1:] < 0):
+        iteration += 1
+        doc.write(
+            r'\paragraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n' +
+            r'\begin{center}' +
+            pd.DataFrame(table, copy=True)
+            .set_index('Базис')
+            .to_latex() +
+            r'\end{center}'
+            r'\mbox{}\\В симплекс-таблице есть отрицательные коэффициенты строки $f(x)$, '
+            r'значит данное базисное решение не оптимально.'
+        )
+        # Находим ведущий столбец
+        leadCol = table.iloc[-1][1:].astype(float).idxmin()
+        # print(table[leadCol])
+        # Находим ведущую строку
+        leadRow = np.argmin([
+            table.at[i, 'B'] / row
+            if row > 0
+            else np.Infinity
+            for i, row in enumerate(table[leadCol])
+        ])
+        # Находим ведущий элемент
+        leadElem = table.at[leadRow, leadCol]
+        # Пересчитываем элементы таблицы
+        # Делим элементы главной строки на ведущий элемент
+        table.at[leadRow, 'Базис'] = leadCol
+        for col in table.columns[1:]:
+            table.at[leadRow, col] /= leadElem
+
+        for row in range(len(table) - 1):
+            if row == leadRow:
+                continue
+            aik = table.at[row, leadCol]
+            for col in table.columns[1:]:
+                table.at[row, col] -= table.at[leadRow, col] * aik
+
+        aik = table.at[len(table) - 1, leadCol]
+        table.at[len(table) - 1, 'B'] -= table.at[leadRow, 'B'] * aik
+        for col in table.columns[2:]:
+            table.at[len(table) - 1, col] -= table.at[leadRow, col] * aik
+    doc.write(
+        r'\paragraph{Итерация ' + str(iteration + 1) + r'}\mbox{}\\''\n' +
+        r'\begin{center}' +
+        pd.DataFrame(table, copy=True)
+        .set_index('Базис')
+        .to_latex() +
+        r'\end{center}'
+        r'\mbox{}\\В симплекс-таблице есть отрицательные коэффициенты строки $f(x)$, '
+        r'значит данное базисное решение не оптимально.'
+    )
+
+
 def main(
         points,
         X,
@@ -54,212 +133,145 @@ def main(
         excessLine,
         inactiveLine
 ):
-    document = open('lab_4.md', 'w')
-    document.write(
-        '---\n' +
-        'mainfont: CMU Typewriter Text\n' +
-        'header-includes:\n' +
-        r'- \usepackage{booktabs}' + '\n' +
-        'output:\n' +
-        'pdf_document:\n' +
-        'toc: false\n' +
-        'template: default.latex\n' +
-        '---\n\n'
-    )
     new_line = r'\\'
+
+    plt.figure(figsize=(10, 10), dpi=100)
+    plt.plot(
+        [el[x1] for el in points],
+        [el[x2] for el in points],
+        c='DODGERBLUE',
+        lw=2,
+        marker='o',
+        mfc='DODGERBLUE',
+        mec='DODGERBLUE'
+    )
+    x_line = np.linspace(-20, 20, 3)
+    y_line = - 7 / 4 * x_line
+    plt.plot(
+        x_line,
+        y_line,
+        c='CORAL',
+        lw=2
+    )
+    plt.xlim(-20, 105)
+    plt.ylim(-20, 105)
+    plt.grid(True)
+    plt.axhline(y=0, color='k', lw=2)
+    plt.axvline(x=0, color='k', lw=2)
+    plt.tight_layout()
+    plt.savefig('plot_l4.png')
     document.write(
-        rf"""# Лабораторная работа № 4
-
-## Цель работы
-
-Проанализировать имеющуюся линейную модель на чувствительность, используя 
-двойственный симплекс метод.
-
-## Решение
-
-![Область ограничений](plot_1.png)
-
-Целевая функция:
-$$f(x)={sp.latex(f)}$$
-
-Область ограничений задачи в стандартной форме:
-$$
-X=\begin{{cases}}
-{''.join([sp.latex(s) + f',{new_line}' for s in systemX]) +
- ','.join([sp.latex(x) for x in X[0:2]])}
-\geq 0.
-\end{{cases}}
-$$
-
-Найденное оптимальное решение в предыдущих лабораторных работах:
-$$f^*=f(x^*)={f.subs(optX)}$$
-
-Симплекс-таблица, полученная в лабораторной работе № 3:
-$${pd.DataFrame(simplexTable, copy=True)
-        .set_index('Базис')
-        .reindex(X + ['f(x)'])
-        .dropna().to_latex()}$$""" + '\n\n'
+        r'\section{Задание}'
+        r'\begin{enumerate}'
+        r'\item В исходную ЗЛП добавить новое ограничение таким образом, чтобы базисные переменные в соответствии с '
+        'ограничениями на начальной итерации получили отрицательные значения.'
+        r'\item Найти решение поставленной ЗЛП 3-мя способами:'
+        r'\begin{itemize}'
+        r'\item Используя обычный симплекс-метод;'
+        r'\item Используя двойственный симплекс-метод;'
+        r'\item Ввести дополнительную неотрицательную искусственную переменную и найти решение с помощью '
+        r'симплекс-метода, пересчитывая на каждой итерации значение $f(x)$.'
+        r'\end{itemize}'
+        r'\end{enumerate}'
     )
-
-    def introduce_new_limit(basic_simplex_table, limit_line, line_type):
-        document.write("### Введем дополнительное ограничение\n")
-        plot_new_limit(points, limit_line, f'lab4_{line_type}.png')
-        document.write(f'![Новое ограничение](lab4_{line_type}.png)\n\n')
-        lhs = (x1 - limit_line[0][x1]) / (limit_line[1][x1] - limit_line[0][x1])
-        rhs = (x2 - limit_line[0][x2]) / (limit_line[1][x2] - limit_line[0][x2])
-        coefficient = (lhs - rhs).as_coefficients_dict()
-        limit_line_expression = sp.Eq(coefficient[x1] * x1 + coefficient[x2] * x2, -coefficient[1])
-        document.write(f"""
-Уравнение прямой: ${sp.latex(limit_line_expression)}$;
-
-Ограничение: ${sp.latex(sp.LessThan(limit_line_expression.lhs, limit_line_expression.rhs))}$;
-
-Представим в канонической форме: ${sp.latex(
-            sp.Eq(limit_line_expression.lhs + sp.symbols("x7"), limit_line_expression.rhs))}$;
-
-Так как $x_1$ и $x_2$ - базисные переменные, их необходимо исключить из уравнения."""
-                       )
-        x_1 = basic_simplex_table.loc[x1][0] - np.sum([
-            c * X[i]
-            if X[i] != x1
-            else 0
-            for i, c in enumerate(basic_simplex_table.loc[x1][1:])
-        ])
-        document.write(f"""
-Выразим $x_1$ из {basic_simplex_table.index.to_list().index(x1) + 1}-й строки:
-$$ x_1 = {sp.latex(x_1)} $$
-        """)
-        x_2 = basic_simplex_table.loc[x2][0] - np.sum([
-            c * X[i]
-            if X[i] != x2
-            else 0
-            for i, c in enumerate(basic_simplex_table.loc[x2][1:])
-        ])
-        document.write(f"""
-Выразим $x_2$ из {basic_simplex_table.index.to_list().index(x2) + 1}-й строки:
-$$ x_2 = {sp.latex(x_2)} $$
-    """)
-        limit_line_expression = sp.nsimplify(limit_line_expression.subs({x1: x_1, x2: x_2}))
-        coefficient = limit_line_expression.lhs.as_coefficients_dict()
-        x7 = sp.symbols('x7')
-        if x7 not in X:
-            X.append(x7)
-        limit_line_expression = sp.Eq(limit_line_expression.lhs - coefficient[1] + X[6],
-                                      limit_line_expression.rhs - coefficient[1])
-        document.write(
-            "$$" + sp.latex(limit_line_expression) + "$$" +
-            "\nПолученное уравнение вводим в симплекс-таблицу"
+    document.write(
+        r'\section{Решение}'
+        # r'\clearpage''\n'
+        r'\begin{figure}[h!]'
+        r'\centering'
+        r'\includegraphics[height=10cm]{plot_l4.png}'
+        r'\caption{Область ограничений}'
+        r'\end{figure}'
+    )
+    document.write(
+        r'Целевая функция имеет вид: $f(x_1,x_2)='
+        + sp.latex(f) +
+        r'\rightarrow max.$\\'
+        r'А область ограничений задачи в стандартной форме имеет вид:'
+        r'\begin{equation*}''\n'
+        r'X = \begin{cases}''\n' +
+        ''.join([sp.latex(s).replace('=', '&=') + f',{new_line}' for s in systemX]) +
+        ','.join([sp.latex(x) for x in X[0:2]])
+        + r' &\geq 0.'
+          r'\end{cases}''\n'
+          r'\end{equation*}''\n'
+    )
+    document.write(
+        r'Найденное оптимальное рещение в предыдущих практических работах:'
+        r'$$ f^* = f_{max} = f(100, 80) = 1020 $$'
+    )
+    document.write(
+        r'\subsection{Введем дополнительное ограничение}''\n'
+    )
+    plt.figure(figsize=(10, 10), dpi=100)
+    plt.plot(
+        [el[x1] for el in points],
+        [el[x2] for el in points],
+        c='DODGERBLUE',
+        lw=2,
+        marker='o',
+        mfc='DODGERBLUE',
+        mec='DODGERBLUE'
+    )
+    y_line = np.linspace(30, 90, 2)
+    x_line = -9 * (y_line - 40) / 4 + 100
+    plt.plot(
+        x_line,
+        y_line,
+        c='CORAL',
+        lw=2
+    )
+    plt.xlim(0, 105)
+    plt.ylim(0, 105)
+    plt.grid(True)
+    plt.axhline(y=0, color='k', lw=2)
+    plt.axvline(x=0, color='k', lw=2)
+    plt.tight_layout()
+    plt.savefig('plot_l4_2.png')
+    document.write(
+        r'\begin{figure}[h!]'
+        r'\centering'
+        r'\includegraphics[height=10cm]{plot_l4_2.png}'
+        r'\caption{Новое ограничение}'
+        r'\end{figure}'
+        r'Уравнение прямой имеет вид: '
+        r'$$4 x_1 + 9 x_2 = 760$$'
+        r'Ограничение имеет вид: '
+        r'$$4 x_1 + 9 x_2 \geq 760$$'
+    )
+    X.append(sp.symbols('x7'))
+    systemX.append(
+        sp.Eq(
+            -(4 * x1 + 9 * x2) + X[6],
+            -760
         )
-        basic_simplex_table[X[6]] = [0] * len(basic_simplex_table)
-        basic_simplex_table.loc[X[6]] = [limit_line_expression.rhs] + [
-            limit_line_expression.lhs.as_coefficients_dict()[x] for x in X]
-        basic_simplex_table = basic_simplex_table.reindex(X + ['f(x)']).dropna().reset_index()
-
-        def print_table(table):
-            t = pd.DataFrame(table, copy=True)
-            document.write(
-                t.set_index('Базис').to_latex()
-            )
-
-        def recalc(simplex_table):
-            while not np.all(simplex_table.iloc[-1][1:] >= 0) \
-                    or not np.all(simplex_table['B'] >= 0):
-                # Находим ведущий столбец
-                columns = simplex_table.iloc[-1][1:].astype(float)
-                columns[columns == 0] = np.Infinity
-                leadCol = columns.idxmin()
-                # print(table[leadCol])
-                # Находим ведущую строку
-                leadRow = np.argmin([
-                    simplex_table.at[i, 'B'] / row
-                    if row != 0
-                    else np.Infinity
-                    for i, row in enumerate(simplex_table[leadCol][:-1])
-                ])
-                # Находим ведущий элемент
-                leadElem = simplex_table.at[leadRow, leadCol]
-
-                document.write(
-                    'Ведущий столбец: $' + sp.latex(leadCol) + '$\n' +
-                    'Ведущая строка: $' + sp.latex(simplex_table.at[leadRow, 'Базис']) + '$\n' +
-                    'Ведущий элемент: $' + sp.latex(leadElem) + '$\n\n'
-                )
-
-                # Пересчитываем элементы таблицы
-                # Делим элементы главной строки на ведущий элемент
-                simplex_table.at[leadRow, 'Базис'] = leadCol
-                for col in simplex_table.columns[1:]:
-                    simplex_table.at[leadRow, col] /= leadElem
-
-                for row in range(len(simplex_table) - 1):
-                    if row == leadRow:
-                        continue
-                    aik = simplex_table.at[row, leadCol]
-                    for col in simplex_table.columns[1:]:
-                        simplex_table.at[row, col] -= simplex_table.at[leadRow, col] * aik
-                        document.write(
-                            'Cell[{0}][{1}] -= {2} * {3} = {4}\n\n'.format(
-                                simplex_table.at[row, 'Базис'],
-                                col,
-                                simplex_table.at[leadRow, col],
-                                aik,
-                                simplex_table.at[row, col]
-                            )
-                        )
-
-                aik = simplex_table.at[len(simplex_table) - 1, leadCol]
-                simplex_table.at[len(simplex_table) - 1, 'B'] -= simplex_table.at[leadRow, 'B'] * aik
-                for col in simplex_table.columns[2:]:
-                    simplex_table.at[len(simplex_table) - 1, col] -= simplex_table.at[leadRow, col] * aik
-
-                print_table(simplex_table)
-
-        print_table(basic_simplex_table)
-        recalc(pd.DataFrame(basic_simplex_table, copy=True))
-
-    introduce_new_limit(
-        pd.DataFrame(simplexTable, copy=True)
-            .set_index('Базис')
-            .reindex(X + ['f(x)'])
-            .dropna(),
-        activeLine,
-        'active'
     )
-    document.write("""\n\n
-В симплекс-таблице в столбце базисных переменных нет отрицательных элементов,
-значит данное базисное решение оптимально. 
-
-Значение целевой функции ухудшилось по сравнению с исходным оптимальным решением,
-значит дополнительное ограничение ***активное***.\n\n""")
-
-    introduce_new_limit(
-        pd.DataFrame(simplexTable, copy=True)
-            .set_index('Базис')
-            .reindex(X + ['f(x)'])
-            .dropna(),
-        excessLine,
-        'excess'
+    document.write(
+        r'\begin{equation*}''\n'
+        r'X = \begin{cases}''\n' +
+        ''.join([sp.latex(s).replace('=', '&=') + f',{new_line}' for s in systemX]) +
+        ','.join([sp.latex(x) for x in X])
+        + r' &\geq 0.'
+          r'\end{cases}''\n'
+          r'\end{equation*}''\n'
+          r'Среди переменных задачи можно выделить базисные переменные: $' +
+        ','.join([sp.latex(s) for s in X[2:]]) +
+        r'$ и не базисные: $' +
+        ','.join([sp.latex(s) for s in X[0:2]]) + '$'
     )
-    document.write("""\n\n
-В симплекс-таблице в столбце базисных переменных нет отрицательных элементов,
-значит данное базисное решение оптимально. 
 
-Значение целевой функции не изменилось по сравнению с исходным оптимальным решением.
-С помощью графического способа можно убедиться, что оптимальное решение лежит на прямой,
-являющейся дополнительным ограничением. Следовательно, дополнительное ограничение ***избыточное***.\n\n""")
-
-    introduce_new_limit(
-        pd.DataFrame(simplexTable, copy=True)
-            .set_index('Базис')
-            .reindex(X + ['f(x)'])
-            .dropna(),
-        inactiveLine,
-        'inactive'
+    document.write(
+        r'\subsubsection{Используем обычный симплекс-метод для решения задачи}'
+        r'$ a^{`}_{ij} = a_{ij} - \frac{a_{rj} * a_{ik}}{a_{rk}} $\\'
+        r'$ b^{`}_{i} = b_{i} - \frac{b_{r} * a_{ik}}{a_{rk}} $\\'
+        r'$ f^{`}(x) = f(x) - \frac{b_{r} * \Delta_{k}}{a_{rk}} $\\'
+        r'$ \Delta^{`}_{j} = \Delta_{j} - \frac{a_{rj} * \Delta_{k}}{a_{rk}} $\\'
     )
-    document.write("""\n\n
-В симплекс-таблице в столбце базисных переменных нет отрицательных элементов,
-значит данное базисное решение оптимально. 
-
-Значение целевой функции не изменилось по сравнению с исходным оптимальным решением.
-С помощью графического способа можно убедиться, что оптимальное решение не принадлежит прямой,
-являющейся дополнительным ограничением. Следовательно, дополнительное ограничение ***неактивное***.\n\n""")
+    table = pd.DataFrame(simplexTable, copy=True)
+    series = pd.Series(table.iloc[4], copy=True)
+    table.iloc[4] = [X[6], -760, -4, -9, 0, 0, 0, 0]
+    table = table.append(series, ignore_index=True)
+    table[X[6]] = [0, 0, 0, 0, 1, 0]
+    simplex_shit(table, document)
+    document.write(r'\end{document}')
+    return
