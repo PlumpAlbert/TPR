@@ -5,6 +5,7 @@ import sympy as sp
 from matplotlib import rc
 
 x1, x2 = sp.symbols('x1 x2')
+_f = 5 * x1 + 6 * x2
 rc('xtick', labelsize=16)
 rc('ytick', labelsize=16)
 document = open('lab_4.tex', 'w')
@@ -14,9 +15,11 @@ document.write(
     r"\usepackage{amsmath}" "\n"
     r'\usepackage{booktabs}' '\n'
     r'\usepackage{graphicx}' '\n'
+    # r'\usepackage[english,russian]{babel}''\n'
+    # r'\usepackage{tempora}''\n'
     r'\usepackage{xecyr}''\n'
     r"\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}" "\n"
-    r"\setmainfont{Monofur Nerd Font Mono}" "\n"
+    r"\setmainfont{Times New Roman}" "\n"
 
     r'\title{Лабораторная работа №4}' '\n'
     r'\author{Plump Albert}' '\n'
@@ -30,91 +33,157 @@ document.write(
 )
 
 
+def print_table(table):
+    document.write(
+        r'\begin{table}[h!]''\n'
+        r'\begin{center}''\n'
+        r'\begin{tabular}'
+        f'{{|l|{len(table.columns) * "c|"}}}''\n'
+        r'\hline''\n' +
+        # r'\toprule''\n'
+        f'{table.index.name} & {" & ".join(["$" + sp.latex(_c) + "$" for _c in table.columns])[:-1]}$'r'\\''\n' +
+        r'\hline''\n' +
+        r'\\''\n'.join([
+            "$" + sp.latex(row.name) + "$ & " + " & ".join([
+                "$" + sp.latex(sp.nsimplify(row[_c])) + "$"
+                for _c in table.columns
+            ])
+            for i, row in table.iterrows()
+        ]) + r'\\ \hline''\n'
+             r'\end{tabular}''\n'
+             r'\end{center}''\n'
+             r'\end{table}\\''\n'
+    )
+
+
 def simplex_shit(table, X, double=False, artificial=False):
     iteration = 0
-    if artificial:
-        omega_index = table.index[table['Базис'] == '-w(x)'][0]
-    while np.any(table.iloc[-1][1:] < 0) or double:
-        if artificial and table.iloc[omega_index]['B'] == 0:
+    while np.any(table.loc['f(x)'][1:] < 0) or double:
+        if artificial and table.at['w(x)', 'B'] == 0:
+            document.write(
+                r'\subparagraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n'
+            )
+            print_table(table)
+            document.write(
+                r'Так как $\omega(x)=0$, следовательно, можно исключить $x_8$ из симплекс-таблицы.\\'
+                rf'Проверим правильность расчета функции $f(x)={sp.latex(_f)}$.\\'
+                r'Так как $x_1,x_2$ являются базисными переменными, необходимо исключить их из значения '
+                r'функции, выразив через другие переменные.\\'
+                r'Выразим $x_1$:\\'
+            )
+            x1_row = table.loc[table[x1] == 1]
+            x1_exp = sp.nsimplify(x1_row['B'][0]) - np.sum([
+                sp.nsimplify(x1_row[_x]) * _x
+                if _x != x1
+                else 0
+                for _x in X
+            ])
+            document.write(
+                '$$' + sp.latex(sp.Eq(
+                    np.sum([sp.nsimplify(x1_row[_x]) * _x for _x in X]),
+                    sp.nsimplify(x1_row['B'][0])
+                )) + r'$$\\$$' + sp.latex(sp.Eq(
+                    x1,
+                    x1_exp
+                )) + r'$$\\'
+                     r'Выразим $x_2$:'
+            )
+            x2_row = table.loc[table[x2] == 1]
+            x2_exp = sp.nsimplify(x2_row['B'][0]) - np.sum([
+                sp.nsimplify(x2_row[_x]) * _x
+                if _x != x2
+                else 0
+                for _x in X
+            ])
+            document.write(
+                '$$' + sp.latex(sp.Eq(
+                    np.sum([sp.nsimplify(x2_row[_x]) * _x for _x in X]),
+                    sp.nsimplify(x2_row['B'][0])
+                )) + r'$$\\$$' + sp.latex(sp.Eq(
+                    x2,
+                    x2_exp
+                )) + r'$$\\' +
+                r'Выразим $f(x)$:'
+                f'$$f(x) = {sp.latex(_f)} = {sp.latex(_f.subs({x2: x2_exp}).subs({x1: x1_exp}))}$$'
+            )
             artificial = False
-            table = table.drop(omega_index, axis=0) \
-                .drop(table.index[table['Базис'] == X[7]], axis=0) \
+            table = table.drop('w(x)', axis=0) \
                 .drop(X[7], axis=1)
-            table.index = range(0, len(table))
+            if X[7] in table.index:
+                table = table.drop(X[7], axis=0)
             X.pop()
 
         if double:
             document.write(
-                r'\subparagraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n' +
-                r'\begin{center}' +
-                pd.DataFrame(table, copy=True)
-                .set_index('Базис')
-                .to_latex() +
-                r'\end{center}'
-                r'\mbox{}\\В симплекс-таблице в столбце базисных переменных есть отрицательные элементы, '
+                r'\subparagraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n'
+            )
+            print_table(table)
+            document.write(
+                r'В симплекс-таблице в столбце базисных переменных есть отрицательные элементы, '
                 r'значит используем алгоритм двойственного симплекс-метода.'
             )
-            leadRow = table.iloc[:-1]['B'].astype(float).idxmin()
+            basis = table.iloc[:-1]['B']
+            # Находим максимальный по модулю элемент среди отрицательных строк
+            leadRow = basis[basis < 0].idxmax()
             leadCol = table.columns[np.argmin([
-                table.at[len(table) - 1, _x] / table.at[leadRow, _x]
-                if table.at[leadRow, _x] != 0 and table.at[len(table) - 1, _x] != 0
+                abs(table.at[leadRow, 'B'] / table.at[leadRow, _x])
+                if table.at[leadRow, _x] < 0
                 else np.Infinity
                 for _x in X
-            ]) + 2]
+            ]) + 1]
         else:
             document.write(
-                r'\subparagraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n' +
-                r'\begin{center}' +
-                pd.DataFrame(table, copy=True)
-                .set_index('Базис')
-                .to_latex() +
-                r'\end{center}'
-                r'\mbox{}\\В симплекс-таблице есть отрицательные коэффициенты строки $f(x)$, '
+                r'\subparagraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n'
+            )
+            print_table(table)
+            document.write(
+                r'В симплекс-таблице есть отрицательные коэффициенты строки $f(x)$, '
                 r'значит данное базисное решение не оптимально.'
             )
             # Находим ведущий столбец
-            leadCol = table.iloc[-1][1:].astype(float).idxmin()
+            leadCol = table.iloc[-1][1:].idxmin()
             # print(table[leadCol])
             # Находим ведущую строку
-            leadRow = np.argmin([
-                table.at[i, 'B'] / row
+            leadRow = table.index[np.argmin([
+                table.iloc[i]['B'] / row
                 if row > 0
                 else np.Infinity
                 for i, row in enumerate(table[leadCol][:-1])
-            ])
+            ])]
         iteration += 1
 
         # Находим ведущий элемент
         leadElem = table.at[leadRow, leadCol]
-        # Пересчитываем элементы таблицы
         # Делим элементы главной строки на ведущий элемент
-        table.at[leadRow, 'Базис'] = leadCol
-        for col in table.columns[1:]:
+        for col in table.columns:
             table.at[leadRow, col] /= leadElem
 
-        for row in range(len(table) - 1):
+        # Пересчитываем элементы таблицы
+        for row in table.index:
             if row == leadRow:
                 continue
             aik = table.at[row, leadCol]
-            for col in table.columns[1:]:
+            for col in table.columns:
                 table.at[row, col] -= table.at[leadRow, col] * aik
 
-        aik = table.at[len(table) - 1, leadCol]
-        table.at[len(table) - 1, 'B'] -= table.at[leadRow, 'B'] * aik
-        for col in table.columns[2:]:
-            table.at[len(table) - 1, col] -= table.at[leadRow, col] * aik
+        aik = table.at['f(x)', leadCol]
+        table.at['f(x)', 'B'] -= table.at[leadRow, 'B'] * aik
+        for col in table.columns[1:]:
+            table.at['f(x)', col] -= table.at[leadRow, col] * aik
         if np.all(table['B'] >= 0):
             double = False
+        # Обновляем индекс таблицы
+        table.index.values[table.index == leadRow] = leadCol
+        table = table.reindex()
 
-    _t = pd.DataFrame(table, copy=True).set_index('Базис')
     document.write(
-        r'\subparagraph{Итерация ' + str(iteration + 1) + r'}\mbox{}\\''\n' +
-        r'\begin{center}' +
-        _t.to_latex() +
-        r'\end{center}'
-        r'\mbox{}\\В симплекс-таблице все коэффициенты строки $f(x)$ неотрицательные, '
+        r'\subparagraph{Итерация ' + str(iteration) + r'}\mbox{}\\''\n'
+    )
+    print_table(table)
+    document.write(
+        r'В симплекс-таблице все коэффициенты строки $f(x)$ неотрицательные, '
         r'значит данное базисное решение оптимально.\\'
-        rf'Таким образом, $f^* = f({_t.at[x1, "B"]}, {_t.at[x2, "B"]}) = {_t.at["f(x)", "B"]}$.'
+        rf'Таким образом, $f^* = f({table.at[x1, "B"]}, {table.at[x2, "B"]}) = {table.at["f(x)", "B"]}$.'
     )
 
 
@@ -129,6 +198,7 @@ def main(
         excessLine,
         inactiveLine
 ):
+    _f = f
     new_line = r'\\'
 
     plt.figure(figsize=(10, 10), dpi=100)
@@ -233,13 +303,13 @@ def main(
         r'Уравнение прямой имеет вид: '
         r'$$4 x_1 + 9 x_2 = 760$$'
         r'Ограничение имеет вид: '
-        r'$$4 x_1 + 9 x_2 \leq 760$$'
+        r'$$4 x_1 + 9 x_2 \geq 760$$'
     )
     X.append(sp.symbols('x7'))
     systemX.append(
         sp.Eq(
-            4 * x1 + 9 * x2 + X[6],
-            760
+            -4 * x1 - 9 * x2 + X[6],
+            -760
         )
     )
     document.write(
@@ -265,16 +335,23 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[6], 760, 4, 9, 0, 0, 0, 0]
+    table.iloc[4] = [X[6], -760, -4, -9, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
-    simplex_shit(pd.DataFrame(table, copy=True), X)
+    table = table.set_index('Базис')
+    simplex_shit(pd.DataFrame(table, copy=True, dtype=sp.FractionField), X)
 
     document.write(
         r'\paragraph{Используем двойственный симплекс-метод для решения задачи}'
         r'\mbox{}\\'
     )
-    simplex_shit(pd.DataFrame(table, copy=True), X, double=True)
+    table = pd.DataFrame(simplexTable, copy=True)
+    series = pd.Series(table.iloc[4], copy=True)
+    table.iloc[4] = [X[6], -760, -4, -9, 0, 0, 0, 0]
+    table = table.append(series, ignore_index=True)
+    table[X[6]] = [0, 0, 0, 0, 1, 0]
+    table = table.set_index('Базис')
+    simplex_shit(pd.DataFrame(table, copy=True, dtype=sp.FractionField), X, double=True)
 
     document.write(
         r'\paragraph{Используем искусственную переменную для решения задачи}'
@@ -300,15 +377,21 @@ def main(
           r'\omega(x) = x_8 = ' + sp.latex(omega) + r'$\\' +
         r'Тогда $-\omega(x)=-x_8=' + sp.latex(-omega) + r'$\\'
     )
-    _t = pd.DataFrame(table, copy=True)
-    series = pd.Series(_t.iloc[-1], copy=True)
+    table = pd.DataFrame(simplexTable, copy=True)
+    series = pd.Series(table.iloc[4], copy=True)
+    table.iloc[4] = [X[7], -760, -4, -9, 0, 0, 0, 0]
+    table = table.append(series, ignore_index=True)
+    table[X[6]] = [0, 0, 0, 0, 1, 0]
+    table = table.set_index('Базис')
+    _t = pd.DataFrame(table, copy=True, dtype=sp.FractionField)
     # Меняем строку с x7 на x8
-    _t.at[len(_t) - 2, 'Базис'] = X[7]
+    _t.index.values[_t.index == X[6]] = X[7]
+    _t = _t.reindex()
     # Добавляем строку w(x)
-    _t.iloc[-1] = ['-w(x)', -760, -4, -9, 0, 0, 0, 0, -1]
-    _t = _t.append(series, ignore_index=True)
+    _t.loc['w(x)'] = [760, 4, 9, 0, 0, 0, 0, -1]
+    # _t = _t.append(series)
     # Добавляем столбец x8
     _t[X[7]] = [0, 0, 0, 0, 1, 0, 0]
-    simplex_shit(_t, X, artificial=True)
+    simplex_shit(_t, X, double=True, artificial=True)
     document.write(r'\end{document}')
     return
