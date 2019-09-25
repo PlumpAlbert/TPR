@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-from random import uniform
-
 import sympy as sp
 
 import lab_1
@@ -10,7 +8,7 @@ import lab_3
 import lab_4
 
 x1, x2 = sp.symbols("x1 x2")
-f: sp.Add = 7 * x1 + 4 * x2
+f: sp.Add = 5 * x1 + 6 * x2
 # Исходные точки
 points = [
     {x1: 0, x2: 80},
@@ -53,12 +51,12 @@ excessLine = [
 ]
 inactiveLine = [
     {
-        x1: 32 + sp.nsimplify(5/6),
+        x1: 32 + sp.nsimplify(5 / 6),
         x2: 20
     },
     {
         x1: 90,
-        x2: 25 + sp.nsimplify(3/7)
+        x2: 25 + sp.nsimplify(3 / 7)
     }
 ]
 lab_4.main(
