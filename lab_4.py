@@ -280,7 +280,7 @@ def main(
         mec='DODGERBLUE'
     )
     y_line = np.linspace(30, 90, 2)
-    x_line = -9 * (y_line - 40) / 4 + 100
+    x_line = -11 * (y_line - 53) / 4 + 100
     plt.plot(
         x_line,
         y_line,
@@ -301,15 +301,15 @@ def main(
         r'\caption{Новое ограничение}'
         r'\end{figure}'
         r'Уравнение прямой имеет вид: '
-        r'$$4 x_1 + 9 x_2 = 760$$'
+        r'$$4 x_1 + 11 x_2 = 983$$'
         r'Ограничение имеет вид: '
-        r'$$4 x_1 + 9 x_2 \geq 760$$'
+        r'$$4 x_1 + 11 x_2 \geq 983$$'
     )
     X.append(sp.symbols('x7'))
     systemX.append(
         sp.Eq(
-            -4 * x1 - 9 * x2 + X[6],
-            -760
+            -4 * x1 - 11 * x2 + X[6],
+            -983
         )
     )
     document.write(
@@ -335,7 +335,7 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[6], -760, -4, -9, 0, 0, 0, 0]
+    table.iloc[4] = [X[6], -983, -4, -11, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
     table = table.set_index('Базис')
@@ -347,7 +347,7 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[6], -760, -4, -9, 0, 0, 0, 0]
+    table.iloc[4] = [X[6], -983, -4, -11, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
     table = table.set_index('Базис')
@@ -356,7 +356,7 @@ def main(
     document.write(
         r'\paragraph{Используем искусственную переменную для решения задачи}'
         r'\mbox{}\\'
-        r'Введем в левую часть ограничения $4 x_1 + 9 x_2 \leq 760$ неотрицательную '
+        r'Введем в левую часть ограничения $4 x_1 + 11 x_2 \geq 983$ неотрицательную '
         r'искусственную переменную $x_8$:'
     )
     X.append(sp.symbols('x8'))
@@ -379,7 +379,7 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[7], -760, -4, -9, 0, 0, 0, 0]
+    table.iloc[4] = [X[7], -983, -4, -11, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
     table = table.set_index('Базис')
@@ -388,7 +388,7 @@ def main(
     _t.index.values[_t.index == X[6]] = X[7]
     _t = _t.reindex()
     # Добавляем строку w(x)
-    _t.loc['w(x)'] = [760, 4, 9, 0, 0, 0, 0, -1]
+    _t.loc['w(x)'] = [983, 4, 11, 0, 0, 0, 0, -1]
     # _t = _t.append(series)
     # Добавляем столбец x8
     _t[X[7]] = [0, 0, 0, 0, 1, 0, 0]
