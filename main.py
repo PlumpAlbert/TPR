@@ -6,6 +6,7 @@ import lab_1
 import lab_2
 import lab_3
 import lab_4
+import lab_5
 
 x1, x2 = sp.symbols("x1 x2")
 f: sp.Add = 5 * x1 + 6 * x2
@@ -69,6 +70,13 @@ lab_4.main(
     activeLine,
     excessLine,
     inactiveLine
+)
+
+lab_5.main(
+    X,
+    systemX,
+    f,
+    optX
 )
 
 print('Finish!')
