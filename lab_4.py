@@ -18,9 +18,14 @@ document.write(
     r'\usepackage[english,russian]{babel}''\n'
     r'\usepackage{fontspec}''\n'
     r'\usepackage{mathptmx}''\n'
+<<<<<<< Updated upstream
     r'\defaultfontfeatures{Ligatures={TeX},Renderer=Basic}''\n'
     r'\setmainfont[Ligatures={TeX,Historic}]{Monofur Nerd Font}''\n'
     r'\usepackage{xecyr}''\n'
+=======
+    r"\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}" "\n"
+    r"\setmainfont{Times New Roman}" "\n"
+>>>>>>> Stashed changes
 
     r'\title{Лабораторная работа №4}' '\n'
     r'\author{Plump Albert}' '\n'
@@ -38,22 +43,22 @@ def print_table(table):
     document.write(
         r'\begin{table}[h!]''\n'
         r'\begin{center}''\n'
-        r'\begin{tabular}'
-        f'{{|l|{len(table.columns) * "c|"}}}''\n'
-        r'\hline''\n' +
-        # r'\toprule''\n'
-        f'{table.index.name} & {" & ".join(["$" + sp.latex(_c) + "$" for _c in table.columns])[:-1]}$'r'\\''\n' +
-        r'\hline''\n' +
+        r'\begin{tabular}{|l|'
+        f'{len(table.columns) * "|c"}|''}\n'
+        r'\toprule''\n' +
+        f'{table.index.name} & {" & ".join(["$" + sp.latex(_c) + "$" for _c in table.columns])[:-1]}$ 'r'\\''\n' +
+        r'\midrule''\n' +
         r'\\''\n'.join([
             "$" + sp.latex(row.name) + "$ & " + " & ".join([
                 "$" + sp.latex(sp.nsimplify(row[_c])) + "$"
                 for _c in table.columns
             ])
             for i, row in table.iterrows()
-        ]) + r'\\ \hline''\n'
-             r'\end{tabular}''\n'
-             r'\end{center}''\n'
-             r'\end{table}\\''\n'
+        ]) + r'\\' +
+        r'\bottomrule''\n'
+        r'\end{tabular}''\n'
+        r'\end{center}''\n'
+        r'\end{table}''\n'
     )
 
 
@@ -157,20 +162,24 @@ def simplex_shit(table, X, double=False, artificial=False):
         leadElem = table.at[leadRow, leadCol]
         # Делим элементы главной строки на ведущий элемент
         for col in table.columns:
-            table.at[leadRow, col] /= leadElem
-
+            table.at[leadRow, col] = sp.nsimplify(
+                table.at[leadRow, col] / leadElem
+            )
         # Пересчитываем элементы таблицы
         for row in table.index:
             if row == leadRow:
                 continue
             aik = table.at[row, leadCol]
             for col in table.columns:
-                table.at[row, col] -= table.at[leadRow, col] * aik
+                table.at[row, col] = sp.nsimplify(
+                    table.at[row, col] - table.at[leadRow, col] * aik
+                )
 
         aik = table.at['f(x)', leadCol]
-        table.at['f(x)', 'B'] -= table.at[leadRow, 'B'] * aik
-        for col in table.columns[1:]:
-            table.at['f(x)', col] -= table.at[leadRow, col] * aik
+        for col in table.columns:
+            table.at['f(x)', col] = sp.nsimplify(
+                table.at['f(x)', col] - table.at[leadRow, col] * aik
+            )
         if np.all(table['B'] >= 0):
             double = False
         # Обновляем индекс таблицы
