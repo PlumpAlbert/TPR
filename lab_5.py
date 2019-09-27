@@ -10,9 +10,12 @@ document.write(
     r'\renewcommand{\figurename}{Рис.}''\n'
     r'\usepackage{amsmath}''\n'
     r'\usepackage{booktabs}''\n'
-    r'\usepackage{graphicx}''\n'
+    r'\usepackage[english,russian]{babel}''\n'
     r'\usepackage{fontspec}''\n'
-    r'\setmainfont{Monofur Nerd Font}''\n'
+    r'\usepackage{mathptmx}''\n'
+    r'\defaultfontfeatures{Ligatures={TeX},Renderer=Basic}''\n'
+    r'\setmainfont[Ligatures={TeX,Historic}]{Times New Roman}''\n'
+    r'\usepackage{graphicx}''\n'
 
     r'\title{Лабораторная работа №5}''\n'
     r'\author{Plump Albert}''\n'
@@ -30,14 +33,39 @@ def print_matrix(matrix):
         r'\left(''\n'
         r'\begin{matrix}''\n' +
         r' \\'.join([
-            ' & '.join([sp.latex(column) for column in row.A1])
+            ' & '.join([sp.latex(sp.nsimplify(column)) for column in row.A1])
             if isinstance(row, np.matrix)
-            else str(row)
+            else sp.latex(sp.nsimplify(row))
             for row in matrix
         ]) +
         r'\end{matrix}''\n'
         r'\right)'
     )
+
+
+def print_table(X, Xb, fx, alpha_inv, xb, include_index):
+    return (
+        r'\centering''\n'
+        '\n'r'\begin{tabular}[c!]{|c|'+ f'{"".join(["|c" for _x in X])}' + '|c|}\n'
+        r'\toprule''\n'
+        'Базис & ' +
+        f'{" & ".join(["$"+sp.latex(_x)+"$" for _x in X])}' +
+        r' & Решение \\''\n'
+        r'\midrule''\n'
+        '$f(x)$ & '+f'{" & ".join([f"${sp.nsimplify(c)}$" for c in fx])}'+r' & \\' +
+        r"\\".join([
+            "$" + sp.latex(_x) + "$ & " + " & ".join([
+                "$" + sp.latex(sp.nsimplify(alpha_inv.item((i, 0)))) + "$"
+                if j == include_index
+                else " "
+                for j, __x in enumerate(X)
+            ]) + f" & ${sp.nsimplify(xb.item((i, 0)))}$"
+            for i, _x in enumerate(Xb)
+        ]) + r'\\''\n'
+        r'\bottomrule''\n'
+        r'\end{tabular}'
+    )
+
 
 
 def main(
@@ -83,12 +111,9 @@ def main(
         '$$B^{-1}=I.$$'
     )
     def iterate(Xb, Cb, B, not_basis_index):
-        print('B = ', B)
-        print('Cb = ', Cb)
-        invB = np.linalg.inv(B)
-        Y = Cb * invB
-        print('Y = ', Y)
-        NB = np.matrix([
+        B_inv = np.linalg.inv(B)
+        Y = Cb * B_inv
+        P = np.matrix([
             [
                 s.lhs.coeff(X[i])
                 for i in not_basis_index
@@ -96,24 +121,52 @@ def main(
             for s in systemX
         ], dtype='float')
         c = [f.coeff(X[i]) for i in not_basis_index]
-        print('NB = ', NB)
-        new_basis = Y * NB - c
+        new_basis = Y * P - c
+        fx = [
+            new_basis.item(not_basis_index.index(i))
+            if i in not_basis_index
+            else 0
+            for i, _x in enumerate(X)
+        ]
+        include_index = np.argmin(new_basis)
         document.write(
-            r'\paragraph{Итерация 1}\mbox{}\\''\n'
-            r'\subparagraph{Шаг 1} - Вычисление $z_j - с_j$ для небазисных векторов '
-            '$P_1$  и $P_2$.''\n'
+            r'\subparagraph{Шаг 1} - Вычисление $z_j - c_j$ для небазисных '
+            'векторов $P_1$  и $P_2$.''\n'
             r'$$Y=C_B \cdot B^{-1}=' +
             print_matrix(Cb) + ' \cdot ' +
-            print_matrix(invB) + ' = ' +
+            print_matrix(B_inv) + ' = ' +
             print_matrix(Y) +
             r',$$\\''\n'
-            r'$$(z_1 - c_1, z_2 - c_2)=Y \cdot (P_1,P_2) - (c_1,c_2)=' +
+            rf'$$({",".join([f"z_{i+1} - c_{i+1}" for i in not_basis_index])})'
+            f'=Y \cdot ({",".join([f"P_{i+1}" for i in not_basis_index])})'
+            f'- ({",".join([f"c_{i+1}" for i in not_basis_index])})=' +
             print_matrix(Y) + r' \cdot ''\n' +
-            print_matrix(NB) + ' - ''\n' +
+            print_matrix(P) + ' - ''\n' +
             print_matrix(c) + ' = ' +
             print_matrix(new_basis) + '$$''\n'
+            'Следовательно, включению в базис подлежит вектор '
+            rf'$P_{include_index}$.\\'
+        )
+
+        b = np.matrix([[s.rhs] for s in systemX])
+        xb = B_inv * b
+        alpha_inv = B_inv * P[:,include_index]
+        document.write(
+            r'\subparagraph{Шаг 2} - Определение исключаемого вектора при '
+            f'введении в базис вектора $P_{include_index}$.''\n'
+            r'$$X_B=B^{-1} \cdot b=' +
+            print_matrix(B_inv) + r' \cdot ' +
+            print_matrix(b) + ' = ' +
+            print_matrix(xb) + r',$$\\'
+
+            r'$$\alpha^{-1}=B^{-1} \cdot 'f'P_{include_index}=' +
+            print_matrix(B_inv) + r' \cdot ' +
+            print_matrix(P[include_index]) + ' = ' +
+            print_matrix(alpha_inv) + r'.$$\\' +
+            print_table(X, Xb, fx, alpha_inv, xb, include_index)
         )
     Xb = X[2:]
+    document.write('\paragraph{Итерация № 1}\mbox{}\\''\n')
     iterate(
         Xb,
         np.matrix([f.coeff(_x) for _x in Xb], dtype='float'),
