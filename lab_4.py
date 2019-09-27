@@ -18,14 +18,11 @@ document.write(
     r'\usepackage[english,russian]{babel}''\n'
     r'\usepackage{fontspec}''\n'
     r'\usepackage{mathptmx}''\n'
-<<<<<<< Updated upstream
     r'\defaultfontfeatures{Ligatures={TeX},Renderer=Basic}''\n'
     r'\setmainfont[Ligatures={TeX,Historic}]{Monofur Nerd Font}''\n'
     r'\usepackage{xecyr}''\n'
-=======
     r"\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}" "\n"
     r"\setmainfont{Times New Roman}" "\n"
->>>>>>> Stashed changes
 
     r'\title{Лабораторная работа №4}' '\n'
     r'\author{Plump Albert}' '\n'
@@ -41,7 +38,7 @@ document.write(
 
 def print_table(table):
     document.write(
-        r'\begin{table}[h!]''\n'
+        r'\begin{table}[!ht]''\n'
         r'\begin{center}''\n'
         r'\begin{tabular}{|l|'
         f'{len(table.columns) * "|c"}|''}\n'
@@ -159,27 +156,23 @@ def simplex_shit(table, X, double=False, artificial=False):
         iteration += 1
 
         # Находим ведущий элемент
-        leadElem = table.at[leadRow, leadCol]
+        leadElem = sp.nsimplify(table.at[leadRow, leadCol])
         # Делим элементы главной строки на ведущий элемент
         for col in table.columns:
-            table.at[leadRow, col] = sp.nsimplify(
-                table.at[leadRow, col] / leadElem
+            table.at[leadRow, col] = sp.Rational(
+                sp.nsimplify(table.at[leadRow, col]),
+                leadElem
             )
         # Пересчитываем элементы таблицы
         for row in table.index:
             if row == leadRow:
                 continue
-            aik = table.at[row, leadCol]
+            aik = sp.nsimplify(table.at[row, leadCol])
             for col in table.columns:
                 table.at[row, col] = sp.nsimplify(
-                    table.at[row, col] - table.at[leadRow, col] * aik
+                    sp.nsimplify(table.at[row, col]) - sp.nsimplify(table.at[leadRow, col]) * aik
                 )
-
-        aik = table.at['f(x)', leadCol]
-        for col in table.columns:
-            table.at['f(x)', col] = sp.nsimplify(
-                table.at['f(x)', col] - table.at[leadRow, col] * aik
-            )
+        # Остановка двойного симплекс метода
         if np.all(table['B'] >= 0):
             double = False
         # Обновляем индекс таблицы
@@ -253,7 +246,7 @@ def main(
     document.write(
         r'\section{Решение}'
         # r'\clearpage''\n'
-        r'\begin{figure}[h!]'
+        r'\begin{figure}[!ht]'
         r'\centering'
         r'\includegraphics[height=10cm]{plot_l4.png}'
         r'\caption{Область ограничений}'
@@ -274,7 +267,8 @@ def main(
     )
     document.write(
         r'Найденное оптимальное рещение в предыдущих практических работах:'
-        r'$$ f^* = f_{max} = f(100, 80) = 930 $$'
+        r'$$ f^* = f_{max} = '
+        f'f({optX[x1]},{optX[x2]}) = {f.subs(optX)} $$'
     )
     document.write(
         r'\subsection{Введем дополнительное ограничение}''\n'
@@ -305,7 +299,7 @@ def main(
     plt.tight_layout()
     plt.savefig('plot_l4_2.png')
     document.write(
-        r'\begin{figure}[h!]'
+        r'\begin{figure}[!ht]'
         r'\centering'
         r'\includegraphics[height=10cm]{plot_l4_2.png}'
         r'\caption{Новое ограничение}'
