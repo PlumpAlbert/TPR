@@ -15,11 +15,12 @@ document.write(
     r"\usepackage{amsmath}" "\n"
     r'\usepackage{booktabs}' '\n'
     r'\usepackage{graphicx}' '\n'
-    # r'\usepackage[english,russian]{babel}''\n'
-    # r'\usepackage{tempora}''\n'
+    r'\usepackage[english,russian]{babel}''\n'
+    r'\usepackage{fontspec}''\n'
+    r'\usepackage{mathptmx}''\n'
+    r'\defaultfontfeatures{Ligatures={TeX},Renderer=Basic}''\n'
+    r'\setmainfont[Ligatures={TeX,Historic}]{Monofur Nerd Font}''\n'
     r'\usepackage{xecyr}''\n'
-    r"\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}" "\n"
-    r"\setmainfont{Times New Roman}" "\n"
 
     r'\title{Лабораторная работа №4}' '\n'
     r'\author{Plump Albert}' '\n'
@@ -71,8 +72,8 @@ def simplex_shit(table, X, double=False, artificial=False):
                 r'функции, выразив через другие переменные.\\'
                 r'Выразим $x_1$:\\'
             )
-            x1_row = table.loc[table[x1] == 1]
-            x1_exp = sp.nsimplify(x1_row['B'][0]) - np.sum([
+            x1_row = table.iloc[np.where([table[x1].values != 0, table[x2].values == 0])[0][0]]
+            x1_exp = sp.nsimplify(x1_row['B']) - np.sum([
                 sp.nsimplify(x1_row[_x]) * _x
                 if _x != x1
                 else 0
@@ -81,15 +82,15 @@ def simplex_shit(table, X, double=False, artificial=False):
             document.write(
                 '$$' + sp.latex(sp.Eq(
                     np.sum([sp.nsimplify(x1_row[_x]) * _x for _x in X]),
-                    sp.nsimplify(x1_row['B'][0])
+                    sp.nsimplify(x1_row['B'])
                 )) + r'$$\\$$' + sp.latex(sp.Eq(
                     x1,
                     x1_exp
                 )) + r'$$\\'
                      r'Выразим $x_2$:'
             )
-            x2_row = table.loc[table[x2] == 1]
-            x2_exp = sp.nsimplify(x2_row['B'][0]) - np.sum([
+            x2_row = table.iloc[np.where([table[x2].values != 0, table[x1].values == 0])[0][0]]
+            x2_exp = sp.nsimplify(x2_row['B']) - np.sum([
                 sp.nsimplify(x2_row[_x]) * _x
                 if _x != x2
                 else 0
@@ -98,7 +99,7 @@ def simplex_shit(table, X, double=False, artificial=False):
             document.write(
                 '$$' + sp.latex(sp.Eq(
                     np.sum([sp.nsimplify(x2_row[_x]) * _x for _x in X]),
-                    sp.nsimplify(x2_row['B'][0])
+                    sp.nsimplify(x2_row['B'])
                 )) + r'$$\\$$' + sp.latex(sp.Eq(
                     x2,
                     x2_exp
@@ -212,7 +213,7 @@ def main(
         mec='DODGERBLUE'
     )
     x_line = np.linspace(-20, 20, 3)
-    y_line = - 7 / 4 * x_line
+    y_line = - 5 / 6 * x_line
     plt.plot(
         x_line,
         y_line,
@@ -264,7 +265,7 @@ def main(
     )
     document.write(
         r'Найденное оптимальное рещение в предыдущих практических работах:'
-        r'$$ f^* = f_{max} = f(100, 80) = 1020 $$'
+        r'$$ f^* = f_{max} = f(100, 80) = 930 $$'
     )
     document.write(
         r'\subsection{Введем дополнительное ограничение}''\n'
@@ -280,7 +281,7 @@ def main(
         mec='DODGERBLUE'
     )
     y_line = np.linspace(30, 90, 2)
-    x_line = -11 * (y_line - 53) / 4 + 100
+    x_line = -11 * (y_line - 53) / 4 + 80
     plt.plot(
         x_line,
         y_line,
@@ -301,15 +302,15 @@ def main(
         r'\caption{Новое ограничение}'
         r'\end{figure}'
         r'Уравнение прямой имеет вид: '
-        r'$$4 x_1 + 11 x_2 = 983$$'
+        r'$$4 x_1 + 11 x_2 = 783$$'
         r'Ограничение имеет вид: '
-        r'$$4 x_1 + 11 x_2 \geq 983$$'
+        r'$$4 x_1 + 11 x_2 \geq 783$$'
     )
     X.append(sp.symbols('x7'))
     systemX.append(
         sp.Eq(
             -4 * x1 - 11 * x2 + X[6],
-            -983
+            -783
         )
     )
     document.write(
@@ -335,7 +336,7 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[6], -983, -4, -11, 0, 0, 0, 0]
+    table.iloc[4] = [X[6], -783, -4, -11, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
     table = table.set_index('Базис')
@@ -347,7 +348,7 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[6], -983, -4, -11, 0, 0, 0, 0]
+    table.iloc[4] = [X[6], -783, -4, -11, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
     table = table.set_index('Базис')
@@ -356,7 +357,7 @@ def main(
     document.write(
         r'\paragraph{Используем искусственную переменную для решения задачи}'
         r'\mbox{}\\'
-        r'Введем в левую часть ограничения $4 x_1 + 11 x_2 \geq 983$ неотрицательную '
+        r'Введем в левую часть ограничения $4 x_1 + 11 x_2 \geq 783$ неотрицательную '
         r'искусственную переменную $x_8$:'
     )
     X.append(sp.symbols('x8'))
@@ -379,7 +380,7 @@ def main(
     )
     table = pd.DataFrame(simplexTable, copy=True)
     series = pd.Series(table.iloc[4], copy=True)
-    table.iloc[4] = [X[7], -983, -4, -11, 0, 0, 0, 0]
+    table.iloc[4] = [X[7], -783, -4, -11, 0, 0, 0, 0]
     table = table.append(series, ignore_index=True)
     table[X[6]] = [0, 0, 0, 0, 1, 0]
     table = table.set_index('Базис')
@@ -388,7 +389,7 @@ def main(
     _t.index.values[_t.index == X[6]] = X[7]
     _t = _t.reindex()
     # Добавляем строку w(x)
-    _t.loc['w(x)'] = [983, 4, 11, 0, 0, 0, 0, -1]
+    _t.loc['w(x)'] = [783, 4, 11, 0, 0, 0, 0, -1]
     # _t = _t.append(series)
     # Добавляем столбец x8
     _t[X[7]] = [0, 0, 0, 0, 1, 0, 0]
