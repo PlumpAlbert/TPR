@@ -43,7 +43,7 @@ def print_matrix(matrix):
     )
 
 
-def print_table(X, Xb, fx, alpha_inv, xb, include_index):
+def print_table(X, Xb, fx, alpha_inv, xb, lead_column_index):
     return (
         r'\centering''\n'
         '\n'r'\begin{tabular}[c!]{|c|'+ f'{"".join(["|c" for _x in X])}' + '|c|}\n'
@@ -56,7 +56,7 @@ def print_table(X, Xb, fx, alpha_inv, xb, include_index):
         r"\\".join([
             "$" + sp.latex(_x) + "$ & " + " & ".join([
                 "$" + sp.latex(sp.nsimplify(alpha_inv.item((i, 0)))) + "$"
-                if j == include_index
+                if j == lead_column_index
                 else " "
                 for j, __x in enumerate(X)
             ]) + f" & ${sp.nsimplify(xb.item((i, 0)))}$"
@@ -128,7 +128,7 @@ def main(
             else 0
             for i, _x in enumerate(X)
         ]
-        include_index = np.argmin(new_basis)
+        lead_column_index = np.argmin(new_basis)
         document.write(
             r'\subparagraph{Шаг 1} - Вычисление $z_j - c_j$ для небазисных '
             'векторов $P_1$  и $P_2$.''\n'
@@ -145,25 +145,45 @@ def main(
             print_matrix(c) + ' = ' +
             print_matrix(new_basis) + '$$''\n'
             'Следовательно, включению в базис подлежит вектор '
-            rf'$P_{include_index}$.\\'
+            rf'$P_{lead_column_index}$.\\'
         )
 
         b = np.matrix([[s.rhs] for s in systemX])
         xb = B_inv * b
-        alpha_inv = B_inv * P[:,include_index]
+        alpha_inv = B_inv * P[:,lead_column_index]
+        lol = xb / np.where(alpha_inv > 0, alpha_inv, 0)
+        lead_row_index = np.argmin(lol)
         document.write(
             r'\subparagraph{Шаг 2} - Определение исключаемого вектора при '
-            f'введении в базис вектора $P_{include_index}$.''\n'
+            f'введении в базис вектора $P_{lead_column_index}$.''\n'
             r'$$X_B=B^{-1} \cdot b=' +
             print_matrix(B_inv) + r' \cdot ' +
             print_matrix(b) + ' = ' +
             print_matrix(xb) + r',$$\\'
 
-            r'$$\alpha^{-1}=B^{-1} \cdot 'f'P_{include_index}=' +
+            r'$$\alpha^{-1}=B^{-1} \cdot 'f'P_{lead_column_index}=' +
             print_matrix(B_inv) + r' \cdot ' +
-            print_matrix(P[include_index]) + ' = ' +
+            print_matrix(P[lead_column_index]) + ' = ' +
             print_matrix(alpha_inv) + r'.$$\\' +
-            print_table(X, Xb, fx, alpha_inv, xb, include_index)
+            print_table(X, Xb, fx, alpha_inv, xb, lead_column_index) +
+            'Отсюда следует, что $\theta = min(' +
+            ",".join([
+                sp.nsimplify(r)
+                if r != np.Inf
+                else continue
+                for r in np.nditer(lol)
+            ]) + f')={np.min(lol)}.'r'$\\''\n'
+            'Значит, исключению из базиса подлежит вектор $P_{lead_row_index}$.'
+        )
+        
+        
+        document.write(
+            r'\subparagraph{Шаг № 3} - определение обратной матрицы, '
+            r'соответствующей новому базису.\\'
+            f'Так как вместо вектора $P_{lead_row_index}$ в базис вводится '
+            f'вектор $P_{lead_column_index}$ '
+            'и $\alpha^{-1}=' + 
+            print_matrix(alpha_inv.transpose()) + '^T$, то:'
         )
     Xb = X[2:]
     document.write('\paragraph{Итерация № 1}\mbox{}\\''\n')
