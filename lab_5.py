@@ -110,7 +110,7 @@ def main(
         '$$B=(P_3,P_4,P_5,P_6)=I,$$''\n'
         '$$B^{-1}=I.$$'
     )
-    def iterate(Xb, Cb, B, not_basis_index):
+    def iterate(Xb, Cb, B, not_basis_index, iteration):
         B_inv = np.linalg.inv(B)
         Y = Cb * B_inv
         P = np.matrix([
@@ -161,7 +161,7 @@ def main(
             print_matrix(b) + ' = ' +
             print_matrix(xb) + r',$$\\'
 
-            r'$$\alpha^{-1}=B^{-1} \cdot 'f'P_{lead_column_index}=' +
+            rf'$$\alpha^{iteration}'r'=B^{-1} \cdot 'f'P_{lead_column_index}=' +
             print_matrix(B_inv) + r' \cdot ' +
             print_matrix(P[lead_column_index]) + ' = ' +
             print_matrix(alpha_inv) + r'.$$\\' +
@@ -176,13 +176,14 @@ def main(
             'Значит, исключению из базиса подлежит вектор $P_{lead_row_index}$.'
         )
         
-        
+       zeta = alpha_inv / -alpha_inv.item(lead_row_index)
+       zeta.item(lead_row_index) = 1.0 / alpha_inv.item(lead_row_index)
         document.write(
             r'\subparagraph{Шаг № 3} - определение обратной матрицы, '
             r'соответствующей новому базису.\\'
             f'Так как вместо вектора $P_{lead_row_index}$ в базис вводится '
             f'вектор $P_{lead_column_index}$ '
-            'и $\alpha^{-1}=' + 
+            rf'и $\alpha^{iteration}=' + 
             print_matrix(alpha_inv.transpose()) + '^T$, то:'
         )
     Xb = X[2:]
