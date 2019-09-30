@@ -6,6 +6,7 @@ import sympy as sp
 document = open('lab_5.tex', 'w')
 document.write(
     r'\documentclass[14pt,a4paper]{report}''\n'
+    r'\usepackage[legalpaper, left=25mm, top=20mm, right=20mm, bottom=20mm]{geometry}''\n'
     r'\renewcommand{\figurename}{Рис.}''\n'
     r'\usepackage{amsmath}''\n'
     r'\usepackage{booktabs}''\n'
@@ -15,6 +16,8 @@ document.write(
     r'\defaultfontfeatures{Ligatures={TeX},Renderer=Basic}''\n'
     r'\setmainfont[Ligatures={TeX,Historic}]{Times New Roman}''\n'
     r'\usepackage{graphicx}''\n'
+    r'\setlength{\parindent}{1.25cm}''\n'
+    r'\setlength{\parskip}{0cm}''\n'
 
     r'\title{Лабораторная работа №5}''\n'
     r'\author{Plump Albert}''\n'
@@ -31,7 +34,7 @@ def print_matrix(matrix):
     return (
             r'\left(''\n'
             r'\begin{matrix}''\n' +
-            r' \\'.join([
+            r' \\''\n'.join([
                 ' & '.join([sp.latex(sp.nsimplify(column)) for column in row])
                 if isinstance(row, np.ndarray)
                 else sp.latex(sp.nsimplify(row))
@@ -52,7 +55,7 @@ def print_table(X, Xb, fx, alpha_inv, xb, lead_column_index):
             r' & Решение \\''\n'
             r'\midrule''\n'
             '$f(x)$ & ' + f'{" & ".join([f"${sp.nsimplify(c)}$" for c in fx])}' + r' & \\' +
-            r"\\".join([
+            r"\\"'\n'.join([
                 "$" + sp.latex(_x) + "$ & " + " & ".join([
                     "$" + sp.latex(sp.nsimplify(alpha_inv.item(i))) + "$"
                     if j == lead_column_index
@@ -76,7 +79,7 @@ def main(
     systemX = systemX[:-1]
     X = np.array(X[:-1])
     document.write(
-        r'\section{Задание}''\n'
+        r'\section*{Задание}''\n'
         r'\begin{enumerate}''\n'
         r'\item Решить задачу линейного программирования, используя итерации '
         'модифицированного симплекс-метода.''\n'
@@ -85,7 +88,7 @@ def main(
         r'\item Определить исключаемую переменную''\n'
         r'\item Определить новый базис и перейти к шагу 2''\n'
         r'\end{enumerate}''\n'
-        r'\section{Решение}''\n'
+        r'\section*{Решение}''\n'
         r'\begin{figure}[h!]''\n'
         r'\centering''\n'
         r'\includegraphics[height=10cm]{plot_l4.png}''\n'
@@ -170,7 +173,7 @@ def main(
 
             rf'$$\alpha^{iteration}'r'=B^{-1} \cdot 'f'P_{lead_column_index + 1}=' +
             print_matrix(B_inv) + r' \cdot ' +
-            print_matrix(P[lead_column_index]) + ' = ' +
+            print_matrix(P[:, lead_column_index].reshape((len(Xb), 1))) + ' = ' +
             print_matrix(alpha_inv) + r'.$$\\' +
             print_table(X, Xb, fx, alpha_inv, xb, lead_column_index) + '\n' +
             r'Отсюда следует, что $\theta = min(' +
@@ -187,7 +190,7 @@ def main(
         E = np.identity(len(Xb))
         E[:, lead_row_index] = xi.reshape(4)
         Xb_new = np.array(Xb[:lead_row_index].tolist() + [lead_column_index] + Xb[lead_row_index + 1:].tolist())
-        Cb_new = np.array([f.coeff(_x) for _x in X[Xb_new]], dtype='float')
+        Cb_new = np.array([[f.coeff(_x) for _x in X[Xb_new]]], dtype='float')
         B_inv_new = E.dot(B_inv)
         not_basis_index_new = [
             _i
@@ -209,7 +212,7 @@ def main(
         return Xb_new, Cb_new, B_inv_new, not_basis_index_new
 
     Xb = np.arange(2, len(X))
-    Cb = np.array([f.coeff(_x) for _x in X[Xb]], dtype='float')
+    Cb = np.array([[f.coeff(_x) for _x in X[Xb]]], dtype='float')
     B_inv = np.linalg.inv(
         np.array([
             [s.lhs.coeff(_x) for s in systemX]
@@ -220,7 +223,7 @@ def main(
     iteration = 0
     while True:
         iteration += 1
-        document.write('\paragraph{Итерация № 'f'{iteration}'r'}\mbox{}\\''\n')
+        document.write('\paragraph{Итерация № 'f'{iteration}'r'}''\n')
         result = iterate(
             Xb,
             Cb,
@@ -235,10 +238,10 @@ def main(
     b = np.array([[s.rhs] for s in systemX])
     xb = B_inv.dot(b)
     document.write(
-        r'\paragraph{Полученное оптимальное решение}\mbox{}\\''\n$$' +
+        r'\paragraph{Полученное оптимальное решение}''\n$$' +
         print_matrix(X[Xb].transpose()) + r'=B^{-1} \cdot b =' +
         print_matrix(B_inv) + r' \cdot ' + print_matrix(b) + '=' + print_matrix(xb) + ' ,$$\n' +
         r'$$z = C_{B} \cdot X_{B} =' + print_matrix(Cb) + r' \cdot ' + print_matrix(xb) +
-        f'={sp.nsimplify(Cb.dot(xb)[0])}.$$'
+        f'={sp.nsimplify(Cb.dot(xb).item(0))}.$$'
     )
     document.write(r'\end{document}')
